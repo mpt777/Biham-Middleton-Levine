@@ -1,16 +1,10 @@
-/*
-    author: @fikret0
-    date: November 13, 2021
-    GitHub: @fikret0
-*/
-
 #include <SFML/Graphics.hpp>
 #include <windows.h>
 #include <vector>
 #include <iostream>
 #include <iostream>
 #include <fstream>
-
+#include <time.h> 
 
 
 
@@ -21,6 +15,10 @@
 #define YCELLS 100
 
 int cellw = WIDTH / XCELLS, cellh = HEIGHT / YCELLS;
+
+int EMPTY = 0;
+int RED = 1;
+int BLUE = 2;
 
 bool stopped = false;
 
@@ -45,50 +43,54 @@ int getneighbours(int ln, int col, std::vector<std::vector<int>> dgrid = grid) {
     return c - dgrid[ln][col];
 }
 
-float defaultdelay = 0.5f;
-float fastdelay = 0.05f;
+float defaultdelay = 0.0001f;
+float fastdelay = 0.0005f;
 float delay = defaultdelay;
 
 sf::Clock gameclock;
 void timemanager() {
     float elapsed = gameclock.getElapsedTime().asSeconds();
 
-    if (elapsed >= delay) {
-        std::vector<std::vector<int>> tmp = grid;
+///    if (elapsed >= delay) {
+        cout << elapsed << endl;
 
-        for (int ln = 0; ln < YCELLS; ln++) {
-            std::vector<int> l = grid[ln];
-
-            for (int cn = 0; cn < XCELLS; cn++) {
-                int col = l[cn];
-                int nb = getneighbours(ln, cn);
-
-                if (col == 1) {
-                    if (nb < 2 || nb > 3) {
-                        tmp[ln][cn] = 0;
-                        // std::cout << "Dead: " << ln << ", " << cn << " - " << nb << std::endl;
-                    }
-                }
-                else {
-                    if (nb == 3) {
-                        tmp[ln][cn] = 1;
-                        // std::cout << "Born: " << ln << ", " << cn << " - " << nb << std::endl;
+        for (int y_pos = 0; y_pos < YCELLS; y_pos++) {
+            for (int x_pos = 0; x_pos < XCELLS; x_pos++) {
+                if (grid[y_pos][x_pos] == RED) {
+                    if (grid[(y_pos + 1) % YCELLS][x_pos] == EMPTY) {
+                        grid[(y_pos + 1) % YCELLS][x_pos] = RED;
+                        grid[y_pos][x_pos] = EMPTY;
                     }
                 }
             }
         }
+        for (int y_pos = 0; y_pos < YCELLS; y_pos++) {
+            for (int x_pos = 0; x_pos < XCELLS; x_pos++) {
+                if (grid[y_pos][x_pos] == BLUE) {
+                    if (grid[(y_pos)][(x_pos + 1) % XCELLS] == EMPTY) {
+                        grid[(y_pos)][(x_pos + 1) % XCELLS] = BLUE;
+                        grid[y_pos][x_pos] = EMPTY;
+                    };
+                }
+            }
+        }
 
-        grid = tmp;
-
-        gameclock.restart();
-    }
+ //       gameclock.restart();
+ //   }
 }
 
 void initgrid() {
+    srand(time(NULL));
     for (int yc = 0; yc < YCELLS; yc++) {
         std::vector<int> ln;
         for (int xc = 0; xc < XCELLS; xc++) {
-            ln.push_back(0);
+            int random = rand() % 3 + 0;
+            if (random != 0) {
+                if ((rand() % 10 + 0)) {
+                    random = 0;
+                }
+            }
+            ln.push_back(random);
         }
 
         grid.push_back(ln);
@@ -102,20 +104,20 @@ void cleargrid() {
 
 void correcttitle() {
     if (stopped) {
-        mwindow.setTitle("Conway's Game of Life - Stopped");
+        mwindow.setTitle("Biham–Middleton–Levine - Stopped");
     }
     else {
-        mwindow.setTitle("Conway's Game of Life");
+        mwindow.setTitle("Biham–Middleton–Levine");
     }
 }
 
 void togglestop() {
     stopped = !stopped;
     if (stopped) {
-        mwindow.setTitle("Conway's Game of Life - Stopped");
+        mwindow.setTitle("Biham–Middleton–Levine- Stopped");
     }
     else {
-        mwindow.setTitle("Conway's Game of Life");
+        mwindow.setTitle("Biham–Middleton–Levine");
     }
 }
 
@@ -130,27 +132,16 @@ void togglecell(int ln, int col) {
 }
 
 int main(int argc, char** argv) {
-    std::cout << "GitHub: @fikret0 (c) 2021" << std::endl << "Conway's Game of Life" << std::endl << "--dark for dark mode" << std::endl << std::endl
+    std::cout << std::endl << "Biham–Middleton–Levine" << std::endl << std::endl
         << "Space: Toggle start/stop" << std::endl
         << "C: Clear the grid" << std::endl
         << "Tab: Fast forward" << std::endl;
 
-    for (int ai = 0; ai < argc; ai++) {
-        std::string arg = argv[ai];
-        if (arg == "--dark") {
-            darkmode = true;
-        }
-    }
-
     sf::Color gridcolor(200, 200, 200);
     sf::Color cellcolor(0, 0, 0);
+    sf::Color redcolor(255, 0, 0);
+    sf::Color bluecolor(0, 0, 255);
     sf::Color bgcolor(255, 255, 255);
-
-    if (darkmode) {
-        gridcolor = sf::Color(55, 55, 55);
-        cellcolor = sf::Color(255, 255, 255);
-        bgcolor = sf::Color(0, 0, 0);
-    }
 
     togglestop();
     cleargrid();
@@ -238,14 +229,19 @@ int main(int argc, char** argv) {
             for (int cn = 0; cn < XCELLS; cn++) {
                 int col = l[cn];
 
-                if (col == 1) {
+                if (col != EMPTY) {
                     sf::RectangleShape cell;
                     cell.setPosition(cn * cellw + th, ln * cellh + th);
                     cell.setSize(sf::Vector2f(cellw - th, cellh - th));
 
-                    cell.setFillColor(cellcolor);
                     cell.setOutlineThickness(0);
 
+                    if (col == BLUE) {
+                        cell.setFillColor(bluecolor);
+                    }
+                    else if (col == RED) {
+                        cell.setFillColor(redcolor);
+                    }
                     mwindow.draw(cell);
                 }
             }
