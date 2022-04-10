@@ -1,8 +1,11 @@
 #include <SFML/Graphics.hpp>
+#ifdef _MSC_VER
 #include <windows.h>
+#endif  
 #include <vector>
 #include <fstream>
 #include <time.h> 
+#include <math.h>       /* floor */
 
 #include <mpi.h>
 #include <iostream>
@@ -123,20 +126,20 @@ void cleargrid() {
 
 void correcttitle() {
     if (stopped) {
-        mwindow.setTitle("Biham–Middleton–Levine - Stopped");
+        mwindow.setTitle("Bihamï¿½Middletonï¿½Levine - Stopped");
     }
     else {
-        mwindow.setTitle("Biham–Middleton–Levine");
+        mwindow.setTitle("Bihamï¿½Middletonï¿½Levine");
     }
 }
 
 void togglestop() {
     stopped = !stopped;
     if (stopped) {
-        mwindow.setTitle("Biham–Middleton–Levine- Stopped");
+        mwindow.setTitle("Bihamï¿½Middletonï¿½Levine- Stopped");
     }
     else {
-        mwindow.setTitle("Biham–Middleton–Levine");
+        mwindow.setTitle("Bihamï¿½Middletonï¿½Levine");
     }
 }
 
@@ -212,7 +215,7 @@ int main(int argc, char** argv) {
         A = alloc_2d_int(XCELLS, YCELLS);
         recv_A = alloc_2d_int(x_cells, YCELLS);
 
-        std::cout << std::endl << "Biham–Middleton–Levine" << std::endl << std::endl
+        std::cout << std::endl << "Bihamï¿½Middletonï¿½Levine" << std::endl << std::endl
             << "Space: Toggle start/stop" << std::endl
             << "C: Clear the grid" << std::endl
             << "Tab: Fast forward" << std::endl;
