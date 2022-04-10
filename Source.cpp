@@ -10,6 +10,7 @@
 #include <mpi.h>
 #include <iostream>
 #include <stdio.h>
+//
 
 using namespace std;
 #define MCW MPI_COMM_WORLD
@@ -21,10 +22,6 @@ using namespace std::chrono;
 #define WIDTH 1000
 #define HEIGHT 1000
 
-#define XCELLS 200
-#define YCELLS 200
-
-int cellw = WIDTH / XCELLS, cellh = HEIGHT / YCELLS;
 
 int EMPTY = 0;
 int RED = 1;
@@ -44,112 +41,30 @@ float fastdelay = 0.0005f;
 float delay = defaultdelay;
 
 sf::Clock gameclock;
-void timemanager() {
-    return;
-    float elapsed = gameclock.getElapsedTime().asSeconds();
-    //if (elapsed >= delay) {
-    
-        std::vector<std::vector<int>> temp = grid;
 
-        for (int x_pos = 0; x_pos < XCELLS; x_pos++) {
-            for (int y_pos = 0; y_pos < YCELLS; y_pos++) {
-                if (temp[x_pos][y_pos] == RED) {
-                    if (temp[x_pos][(y_pos + 1) % YCELLS] == EMPTY) {
-                        grid[x_pos][(y_pos + 1) % YCELLS] = RED;
-                        grid[x_pos][y_pos] = EMPTY;
-                    }
-                }
-            }
-        }
-        temp = grid;
-        for (int x_pos = 0; x_pos < XCELLS; x_pos++) {
-            for (int y_pos = 0; y_pos < YCELLS; y_pos++) {
-                if (temp[x_pos][y_pos] == BLUE) {
-                    if (temp[(x_pos + 1) % XCELLS][y_pos] == EMPTY) {
-                        grid[(x_pos + 1) % XCELLS][y_pos] = BLUE;
-                        grid[x_pos][y_pos] = EMPTY;
-                    };
-                }
-            }
-        }
-        gameclock.restart();
-   // }
-}
 
-void process_grid() {
-    std::vector<std::vector<int>> temp = grid;
-    for (int x_pos = 0; x_pos < XCELLS; x_pos++) {
-        for (int y_pos = 0; y_pos < YCELLS; y_pos++) {
-            if (temp[x_pos][y_pos] == RED) {
-                if (temp[x_pos][(y_pos + 1) % YCELLS] == EMPTY) {
-                    grid[x_pos][(y_pos + 1) % YCELLS] = RED;
-                    grid[x_pos][y_pos] = EMPTY;
-                }
-            }
-        }
-    }
-    temp = grid;
-    for (int x_pos = 0; x_pos < XCELLS; x_pos++) {
-        for (int y_pos = 0; y_pos < YCELLS; y_pos++) {
-            if (temp[x_pos][y_pos] == BLUE) {
-                if (temp[(x_pos + 1) % XCELLS][y_pos] == EMPTY) {
-                    grid[(x_pos + 1) % XCELLS][y_pos] = BLUE;
-                    grid[x_pos][y_pos] = EMPTY;
-                };
-            }
-        }
-    }
-}
-
-void initgrid() {
-    srand(time(NULL));
-    for (int yc = 0; yc < YCELLS; yc++) {
-        std::vector<int> ln;
-        for (int xc = 0; xc < XCELLS; xc++) {
-            int random = rand() % 3 + 0;
-            if (random != 0) {
-                if ((rand() % 2 + 0)) {
-                    random = 0;
-                }
-            }
-            ln.push_back(random);
-        }
-
-        grid.push_back(ln);
-    }
-}
 
 void cleargrid() {
     grid.clear();
-    initgrid();
+    //initgrid();
 }
 
 void correcttitle() {
     if (stopped) {
-        mwindow.setTitle("Biham�Middleton�Levine - Stopped");
+        mwindow.setTitle("Biham–Middleton–Levine - Stopped");
     }
     else {
-        mwindow.setTitle("Biham�Middleton�Levine");
+        mwindow.setTitle("Biham–Middleton–Levine");
     }
 }
 
 void togglestop() {
     stopped = !stopped;
     if (stopped) {
-        mwindow.setTitle("Biham�Middleton�Levine- Stopped");
+        mwindow.setTitle("Biham–Middleton–Levine- Stopped");
     }
     else {
-        mwindow.setTitle("Biham�Middleton�Levine");
-    }
-}
-
-void togglecell(int ln, int col) {
-    int v = grid[ln][col];
-    if (v == 1) {
-        grid[ln][col] = 0;
-    }
-    else {
-        grid[ln][col] = 1;
+        mwindow.setTitle("Biham–Middleton–Levine");
     }
 }
 
@@ -170,6 +85,14 @@ int main(int argc, char** argv) {
     sf::Color bluecolor(0, 0, 255);
     sf::Color bgcolor(255, 255, 255);
 
+    int XCELLS = 200;
+    int YCELLS = 200;
+    int FULL = 33;
+    if (argc > 1) XCELLS = atoi(argv[1]);
+    if (argc > 2) YCELLS = atoi(argv[2]);
+    if (argc > 3) FULL = atoi(argv[3]);
+
+    int cellw = WIDTH / XCELLS, cellh = HEIGHT / YCELLS;
 
     int rank, size;
     int work = 0;
@@ -181,9 +104,6 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MCW, &size);
     MPI_Status status;
 
-    togglestop();
-    cleargrid();
-
     int x_cells = XCELLS / (size - 1);
 
     int** A;
@@ -192,30 +112,24 @@ int main(int argc, char** argv) {
     int flag;
 
     int next_in_line = (rank + 1) % size;
-    if (next_in_line == 0) {
-        next_in_line = 1;
-    }
+    if (next_in_line == 0) next_in_line = 1;
 
     int prev_in_line = rank - 1;
-    if (prev_in_line == 0) {
-        prev_in_line = size-1;
-    }
+    if (prev_in_line == 0) prev_in_line = size - 1;
 
     int token_tag = 7;
     int ask_tag = 2;
     int response_tag = 3;
 
     int pending_requests = 0;
-    
-    cout << rank << " | next " << next_in_line << " | prev " << prev_in_line << endl;
 
-    //grid[XCELLS][YCELLS];
+    cout << rank << " | next " << next_in_line << " | prev " << prev_in_line << endl;
 
     if (rank == 0) { /* i am a pig */
         A = alloc_2d_int(XCELLS, YCELLS);
         recv_A = alloc_2d_int(x_cells, YCELLS);
 
-        std::cout << std::endl << "Biham�Middleton�Levine" << std::endl << std::endl
+        std::cout << std::endl << "Biham–Middleton–Levine" << std::endl << std::endl
             << "Space: Toggle start/stop" << std::endl
             << "C: Clear the grid" << std::endl
             << "Tab: Fast forward" << std::endl;
@@ -247,27 +161,18 @@ int main(int argc, char** argv) {
                         correcttitle();
                     }
                 }
-                else if (event.type == sf::Event::MouseButtonReleased) {
-                    if (event.mouseButton.button == sf::Mouse::Left) {
-                        int col = floor(event.mouseButton.x / cellw);
-                        int ln = floor(event.mouseButton.y / cellh);
-
-                        gameclock.restart();
-                        togglecell(ln, col);
-
-                        // std::cout << "Line: " << ln << ", Column: " << col << std::endl;
-                    }
-                }
             }
 
             mwindow.clear(bgcolor);
 
+            /*
             if (!stopped) {
                 timemanager();
             }
             else {
                 gameclock.restart();
             }
+            */
 
             float th = 1.f;
 
@@ -301,9 +206,9 @@ int main(int argc, char** argv) {
             /////////////////////////////////////////////////////
             if (!stopped) {
                 MPI_Send(&work, 1, MPI_INT, (rank + 1) % size, token_tag, MCW);
-                
+
                 //cout << "wait" << endl;
-                MPI_Recv(&work, 1, MPI_INT, size-1, token_tag, MCW, &status);
+                MPI_Recv(&work, 1, MPI_INT, size - 1, token_tag, MCW, &status);
                 //cout << "got" << endl;
 
                 for (int i = 1; i < size; i++) {
@@ -313,12 +218,12 @@ int main(int argc, char** argv) {
                     int sender = status.MPI_SOURCE;
                     for (int x_pos = 0; x_pos < x_cells; x_pos++) {
                         for (int y_pos = 0; y_pos < YCELLS; y_pos++) {
-                            A[x_pos + ((i-1) * x_cells)][y_pos] = recv_A[x_pos][y_pos];
+                            A[x_pos + ((i - 1) * x_cells)][y_pos] = recv_A[x_pos][y_pos];
                         }
                     }
                 }
                 //cout << "render" << endl;
-                
+
                 //MPI_Recv(&work, XCELLS * YCELLS, MPI_INT, 1, MPI_ANY_TAG, MCW, MPI_STATUS_IGNORE);
             }
             /* Draw the cells */
@@ -346,7 +251,7 @@ int main(int argc, char** argv) {
             mwindow.display();
         }
     }
-    else {  
+    else {
         A = alloc_2d_int(x_cells, YCELLS);
 
         //Radnomly sets each board up
@@ -354,18 +259,17 @@ int main(int argc, char** argv) {
 
         for (int xc = 0; xc < x_cells; xc++) {
             for (int yc = 0; yc < YCELLS; yc++) {
-                int random = rand() % 3 + 0;
-                if (random != 0) {
-                    if ((rand() % 2 + 0)) {
-                        random = 0;
-                    }
+                int random = 0;
+                int to_fill = rand() % 100 + 0;
+                if (to_fill < FULL) {
+                    random = rand() % 2 + 1;
                 }
                 A[xc][yc] = random;
             }
         }
 
         mwindow.close();
-        while (1){
+        while (1) {
             int data[3] = { -1,-1,-1 };
             int new_data[3] = { -1,-1,-1 };
 
@@ -415,7 +319,7 @@ int main(int argc, char** argv) {
                 }
             }
             */
-            
+
             for (int x_pos = 0; x_pos < x_cells; x_pos++) {
                 for (int y_pos = 0; y_pos < YCELLS; y_pos++) {
                     if (temp[x_pos][y_pos] == BLUE) {
@@ -439,7 +343,7 @@ int main(int argc, char** argv) {
 
             //Token passing
             while (1) {
-                MPI_Iprobe(prev_in_line, 2, MCW, &flag, &status);
+                MPI_Iprobe(prev_in_line, ask_tag, MCW, &flag, &status);
                 if (flag) {
                     while (flag) {
                         MPI_Recv(&data, 3, MPI_INT, prev_in_line, ask_tag, MCW, MPI_STATUS_IGNORE);
@@ -456,18 +360,18 @@ int main(int argc, char** argv) {
                             new_color = EMPTY;
                         }
                         new_data[0] = new_color;
-                        new_data[1] = x_cells-1;
+                        new_data[1] = x_cells - 1;
                         new_data[2] = y;
                         //cout << "2 Recv Data Rank " << rank << " color " << new_data[0] << " x" << new_data[1] << " y" << new_data[2] << endl;
                         MPI_Send(&new_data, 3, MPI_INT, prev_in_line, response_tag, MCW);
-                        MPI_Iprobe(prev_in_line, 2, MCW, &flag, &status);
+                        MPI_Iprobe(prev_in_line, ask_tag, MCW, &flag, &status);
                     }
                 }
 
-                MPI_Iprobe(MPI_ANY_SOURCE, response_tag, MCW, &flag, &status);
+                MPI_Iprobe(next_in_line, response_tag, MCW, &flag, &status);
                 if (flag) {
                     while (flag) {
-                        MPI_Recv(&data, 3, MPI_INT, next_in_line, 3, MCW, MPI_STATUS_IGNORE);
+                        MPI_Recv(&data, 3, MPI_INT, next_in_line, response_tag, MCW, MPI_STATUS_IGNORE);
                         pending_requests--;
                         int color = data[0];
                         int x = data[1];
@@ -479,7 +383,7 @@ int main(int argc, char** argv) {
                 }
                 //TOKEN 
                 MPI_Iprobe(rank - 1, token_tag, MCW, &flag, &status);
-                if (flag and pending_requests==0) {
+                if (flag and pending_requests == 0) {
                     //cout << "rank " << rank << " recv " << rank - 1 << endl;
                     MPI_Recv(&work, 1, MPI_INT, rank - 1, token_tag, MCW, MPI_STATUS_IGNORE);
                     //cout << "rank |*| " << rank << " send to " << (rank + 1) % size << endl;
