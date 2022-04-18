@@ -2,7 +2,7 @@
 
 * Compile and install OpenMPI from source. For more information about how to do this see, https://www.open-mpi.org/faq/?category=building.
 
-* Install SFML. This can be done on Linux this the following command.
+* Install SFML. This can be done on Linux with the following command.
 
 `sudo apt-get install libsfml-dev`
 
