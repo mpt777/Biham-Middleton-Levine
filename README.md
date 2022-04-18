@@ -1,6 +1,7 @@
 # How to build and run it on Linux
 
-* Compile and install OpenMPI from source. For more information about how to do this see, https://www.open-mpi.org/faq/?category=building.
+* Compile and install OpenMPI from source. For more information about how to do this see, 
+https://www.open-mpi.org/faq/?category=building.
 
 * Install SFML. This can be done on Linux with the following command.
 
