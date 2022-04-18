@@ -17,8 +17,8 @@ https://www.open-mpi.org/faq/?category=building.
 
 * Run project
 
-`mpirun -np 4 a.out`
+`mpirun -np 4 sfml-app`
 
 or
 
-`mpirun -np 4 a.out [X_SIZE] [Y_SIZE] [FILL_PERCENTAGE]`
+`mpirun -np 4 sfml-app [X_SIZE] [Y_SIZE] [FILL_PERCENTAGE]`
