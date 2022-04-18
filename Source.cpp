@@ -10,18 +10,15 @@
 #include <mpi.h>
 #include <iostream>
 #include <stdio.h>
-//
+
 
 using namespace std;
 #define MCW MPI_COMM_WORLD
 #include <chrono>
 using namespace std::chrono;
 
-
-
 #define WIDTH 1000
 #define HEIGHT 1000
-
 
 int EMPTY = 0;
 int RED = 1;
@@ -36,17 +33,16 @@ std::vector<std::vector<int>> grid;
 
 sf::RenderWindow mwindow(sf::VideoMode(WIDTH, HEIGHT), "Traffic");
 
-float defaultdelay = 1.f;
-float fastdelay = 0.0005f;
-float delay = defaultdelay;
 
 sf::Clock gameclock;
 
 
-
-void cleargrid() {
-    grid.clear();
-    //initgrid();
+void writeData(int data) {
+    ofstream myfile;
+    myfile.open("data.txt", std::ios_base::app);
+    myfile << data << endl;
+    myfile.close();
+    return;
 }
 
 void correcttitle() {
@@ -126,6 +122,7 @@ int main(int argc, char** argv) {
     cout << rank << " | next " << next_in_line << " | prev " << prev_in_line << endl;
 
     if (rank == 0) { /* i am a pig */
+        remove("data.txt");
         A = alloc_2d_int(XCELLS, YCELLS);
         recv_A = alloc_2d_int(x_cells, YCELLS);
 
@@ -148,31 +145,10 @@ int main(int argc, char** argv) {
                     if (event.key.code == sf::Keyboard::Space) { // toggle stop / start
                         togglestop();
                     }
-                    else if (event.key.code == sf::Keyboard::C) { // clear
-                        cleargrid();
-                    }
-                    else if (event.key.code == sf::Keyboard::Tab) { // fast forward
-
-                    }
-                }
-                else if (event.type == sf::Event::KeyReleased) {
-                    if (event.key.code == sf::Keyboard::Tab) { // restore default speed
-                        delay = defaultdelay;
-                        correcttitle();
-                    }
                 }
             }
 
             mwindow.clear(bgcolor);
-
-            /*
-            if (!stopped) {
-                timemanager();
-            }
-            else {
-                gameclock.restart();
-            }
-            */
 
             float th = 1.f;
 
@@ -205,6 +181,7 @@ int main(int argc, char** argv) {
             }
             /////////////////////////////////////////////////////
             if (!stopped) {
+                auto start = high_resolution_clock::now();
                 MPI_Send(&work, 1, MPI_INT, (rank + 1) % size, token_tag, MCW);
 
                 //cout << "wait" << endl;
@@ -222,6 +199,9 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
+
+                auto stop = high_resolution_clock::now();
+                writeData(duration_cast<microseconds>(stop - start).count());
                 //cout << "render" << endl;
 
                 //MPI_Recv(&work, XCELLS * YCELLS, MPI_INT, 1, MPI_ANY_TAG, MCW, MPI_STATUS_IGNORE);
