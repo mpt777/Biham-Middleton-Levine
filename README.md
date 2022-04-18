@@ -18,3 +18,5 @@ https://www.open-mpi.org/faq/?category=building.
 * Run project
 
 `mpirun -np 4 a.out`
+Or
+`mpirun -np 4 a.out [X_SIZE] [Y_SIZE] [FILL_PERCENTAGE]`
