@@ -1,3 +1,6 @@
+# CS5500 Final Project
+Gavin Francis - Mark Lindsay - Jackson Miles - Marshal Taylor
+
 # How to build and run it on Linux
 
 * Compile and install OpenMPI from source. For more information about how to do this see, 
